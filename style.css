@@ -1,0 +1,64 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: large;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+
+    height: 100svh;
+    max-width: 1024px;
+
+    margin: auto;
+    padding: 2em 0 0 0 ;
+
+}
+
+.content {
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+}
+
+.description {
+    flex: 2 1 0;
+}
+
+.images {
+    flex: 1 1 0;
+}
+
+.links {
+    display: flex;
+    flex-direction: row;
+
+    gap: 1em;
+}
+
+.link-item {
+    display: flex;
+    flex-direction: row;
+}
+
+.pages {
+    display: flex;
+
+    flex-direction: row;
+    flex-grow: 1;
+
+    gap: 0.5em;
+}
+
+.topbar {
+    display: flex;
+    flex-direction: row;
+
+    gap: 1em;
+    align-items: center;
+}

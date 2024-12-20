@@ -9,8 +9,6 @@ html {
 }
 
 body {
-    display: flex;
-    flex-direction: column;
     margin: auto;
     background-color: rebeccapurple;
 
@@ -20,9 +18,6 @@ body {
 }
 
 .content {
-    display: flex;
-    flex-direction: row;
-
     align-items: center;
 }
 
@@ -35,30 +30,26 @@ body {
 }
 
 .links {
-    display: flex;
-    flex-direction: row;
-
     gap: 1em;
 }
 
-.link-item {
-    display: flex;
-    flex-direction: row;
-}
-
 .pages {
-    display: flex;
-
-    flex-direction: row;
     flex-grow: 1;
 
     gap: 0.5em;
 }
 
 .topbar {
-    display: flex;
-    flex-direction: row;
-
     gap: 1em;
     align-items: center;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
 }

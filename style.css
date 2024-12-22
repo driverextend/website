@@ -1,5 +1,7 @@
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 :root {
@@ -10,14 +12,31 @@
 
 body {
     margin: auto;
+    padding: 0 24px 0 24px;
     background-color: rebeccapurple;
 
     height: 100svh;
     max-width: 1024px;
-    padding: 2em 0 0 0 ;
 }
 
-.content {
+header {
+    display: flex;
+    gap: 1em;
+    align-items: baseline;
+    padding: 2em 0 1em 0;
+}
+
+ul {
+    list-style-type: none;
+    padding-inline-start: 0px;
+}
+
+li {
+    display: inline;
+    align-items: baseline;
+}
+
+main {
     align-items: center;
     gap: 8px;
 }
@@ -30,27 +49,15 @@ body {
     flex: 1 1 0;
 }
 
-.links {
-    gap: 1em;
-}
-
 .pages {
     flex-grow: 1;
-
-    gap: 0.5em;
 }
 
-.topbar {
-    gap: 1em;
-    align-items: center;
-}
-
-.flex-row {
-    display: flex;
-    flex-direction: row;
-}
-
-.flex-column {
-    display: flex;
-    flex-direction: column;
+@media (max-width: 600px) {
+    body {
+        padding: 0 8px 0 8px;
+    }
+    header {
+        flex-direction: column;
+    }
 }

@@ -4,15 +4,19 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { FontLoader } from "three/examples/jsm/Addons.js";
 
+// Add device detection
+
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 // Setup
 
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(
-  75,
+  isMobile ? 60 : 75,
   window.innerWidth / window.innerHeight,
   0.1,
-  1000
+  isMobile ? 500 : 1000
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -46,6 +50,8 @@ scene.add(pointLight, ambientLight);
 
 // const controls = new OrbitControls(camera, renderer.domElement);
 
+// Matrix Characters
+
 const loader = new FontLoader();
 
 const matrixCharacters = Array.from(
@@ -56,62 +62,51 @@ function randomMatrixChar() {
   return matrixCharacters[Math.floor(Math.random() * matrixCharacters.length)];
 }
 
-function addMatrixCharacter() {
-  loader.load(
-    "./fonts/helvetiker_regular.typeface.json", // Update path to be relative
-    function (font) {
-      // Success callback
-      console.log("Font loaded successfully");
+const CHAR_COUNT = isMobile ? 200 : 1000; // Fewer characters on mobile
 
-      const initialChar = randomMatrixChar();
-      let geometry = new TextGeometry(initialChar, {
-        font: font,
-        size: 1,
-        height: 0.2,
-        curveSegments: 12,
-        bevelEnabled: false,
-      });
+// Optimize character creation
+const characterPool = [];
+const geometries = {};
 
-      const materials = [
-        new THREE.MeshPhongMaterial({ color: 0x00ff41 }), // front
-        new THREE.MeshPhongMaterial({ color: 0x008f11 }), // side
-      ];
-
-      const matrixCharacter = new THREE.Mesh(geometry, materials);
-
-      const [x, y, z] = Array(3)
-        .fill()
-        .map(() => THREE.MathUtils.randFloatSpread(150));
-      matrixCharacter.position.set(x, y, z);
-
-      scene.add(matrixCharacter);
-
-      setInterval(() => {
-        console.log("Updating character");
-        const newChar = randomMatrixChar();
-        geometry.dispose();
-        geometry = new TextGeometry(newChar, {
-          font: font,
-          size: 1,
-          height: 0.2,
-          curveSegments: 12,
-          bevelEnabled: false,
-        });
-        matrixCharacter.geometry = geometry;
-      }, 250 + Math.random() * 1250); // Random interval between 0.5-1.5 seconds
-    },
-    // Progress callback
-    (xhr) => {
-      console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-    },
-    // Error callback
-    (error) => {
-      console.error("Font loading error:", error);
-    }
-  );
+function createGeometry(char, font) {
+  if (!geometries[char]) {
+    geometries[char] = new TextGeometry(char, {
+      font: font,
+      size: isMobile ? 0.5 : 1,
+      height: 0.2,
+      curveSegments: isMobile ? 6 : 12,
+      bevelEnabled: false,
+    });
+  }
+  return geometries[char];
 }
 
-Array(1000).fill().forEach(addMatrixCharacter);
+function addMatrixCharacter() {
+  loader.load("./fonts/helvetiker_regular.typeface.json", function (font) {
+    const initialChar = randomMatrixChar();
+    const geometry = createGeometry(initialChar, font);
+    const materials = [
+      new THREE.MeshPhongMaterial({ color: 0x00ff41 }), // front
+      new THREE.MeshPhongMaterial({ color: 0x008f11 }), // side
+    ];
+
+    const matrixCharacter = new THREE.Mesh(geometry, materials);
+    const [x, y, z] = Array(3)
+      .fill()
+      .map(() => THREE.MathUtils.randFloatSpread(isMobile ? 50 : 100));
+    matrixCharacter.position.set(x, y, z);
+
+    characterPool.push(matrixCharacter);
+    scene.add(matrixCharacter);
+
+    setInterval(() => {
+      const newChar = randomMatrixChar();
+      matrixCharacter.geometry = createGeometry(newChar, font);
+    }, 250 + Math.random() * 2000); // Random interval between 0.25-2.25 seconds
+  });
+}
+
+Array(CHAR_COUNT).fill().forEach(addMatrixCharacter);
 
 // Avatar;
 
@@ -125,6 +120,12 @@ const blane = new THREE.Mesh(
     roughness: 0.8, // Higher values make it more diffuse
   })
 );
+
+// Position avatar in front of initial camera view
+blane.position.z = -5;
+blane.position.x = 3;
+blane.position.y = 0;
+
 scene.add(blane);
 
 // Scroll Animation
@@ -132,25 +133,56 @@ scene.add(blane);
 function moveCamera() {
   const t = document.body.getBoundingClientRect().top;
 
+  // Rotate avatar
   blane.rotation.y += 0.01;
   blane.rotation.z += 0.01;
 
-  camera.position.z = t * -0.01;
-  camera.position.x = t * -0.0002;
-  camera.rotation.y = t * -0.0002;
+  // Adjust scroll sensitivity based on device
+  const scrollFactor = isMobile ? 0.005 : 0.01;
+  const rotationFactor = isMobile ? 0.0001 : 0.0002;
+
+  // Clamp camera position to reasonable bounds
+  camera.position.z = Math.max(-100, Math.min(30, t * -scrollFactor));
+  camera.position.x = Math.max(-20, Math.min(5, t * -rotationFactor));
+  camera.rotation.y = Math.max(-1, Math.min(1, t * -rotationFactor));
 }
 
 document.body.onscroll = moveCamera;
 moveCamera();
 
 // Animation Loop
-
-function animate() {
+let lastTime = 0;
+function animate(currentTime) {
   requestAnimationFrame(animate);
 
-  // controls.update();
+  // Limit updates to 60fps
+  if (currentTime - lastTime < 16.67) return;
+  lastTime = currentTime;
+
+  // Use frustum culling for better performance
+  const frustum = new THREE.Frustum();
+  frustum.setFromProjectionMatrix(
+    new THREE.Matrix4().multiplyMatrices(
+      camera.projectionMatrix,
+      camera.matrixWorldInverse
+    )
+  );
+
+  // Only render visible objects
+  scene.traverse((object) => {
+    if (object instanceof THREE.Mesh) {
+      object.visible = frustum.containsPoint(object.position);
+    }
+  });
 
   renderer.render(scene, camera);
 }
 
 animate();
+
+// Add resize event listener
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});

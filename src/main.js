@@ -123,7 +123,7 @@ const blane = new THREE.Mesh(
 
 // Position avatar in front of initial camera view
 blane.position.z = -5;
-blane.position.x = 3;
+blane.position.x = 0;
 blane.position.y = 0;
 
 scene.add(blane);

@@ -52,50 +52,70 @@ const matrixCharacters = Array.from(
   "blaneherndonBLANEHERNDON1234567890-=[]\\;',./!@#$%^&*()_+{}|:<>?"
 );
 
+function randomMatrixChar() {
+  return matrixCharacters[Math.floor(Math.random() * matrixCharacters.length)];
+}
+
 function addMatrixCharacter() {
-  loader.load("src/fonts/helvetiker_regular.typeface.json", function (font) {
-    const geometry = new TextGeometry(
-      matrixCharacters[Math.floor(Math.random() * matrixCharacters.length)],
-      {
+  loader.load(
+    "./fonts/helvetiker_regular.typeface.json", // Update path to be relative
+    function (font) {
+      // Success callback
+      console.log("Font loaded successfully");
+
+      const initialChar = randomMatrixChar();
+      let geometry = new TextGeometry(initialChar, {
         font: font,
-        size: 3,
+        size: 1,
         height: 0.2,
         curveSegments: 12,
         bevelEnabled: false,
-        bevelThickness: 0.5,
-        bevelSize: 0.3,
-        bevelOffset: 0,
-        bevelSegments: 5,
-      }
-    );
+      });
 
-    // Create materials inside the loader callback
-    const materials = [
-      new THREE.MeshPhongMaterial({
-        color: 0x00ff41,
-        flatShading: true,
-      }), // front
-      new THREE.MeshPhongMaterial({
-        color: 0x008f11,
-      }), // side
-    ];
+      const materials = [
+        new THREE.MeshPhongMaterial({ color: 0x00ff41 }), // front
+        new THREE.MeshPhongMaterial({ color: 0x008f11 }), // side
+      ];
 
-    const matrixCharacter = new THREE.Mesh(geometry, materials);
-    const [x, y, z] = Array(3)
-      .fill()
-      .map(() => THREE.MathUtils.randFloatSpread(100));
+      const matrixCharacter = new THREE.Mesh(geometry, materials);
 
-    matrixCharacter.position.set(x, y, z);
+      const [x, y, z] = Array(3)
+        .fill()
+        .map(() => THREE.MathUtils.randFloatSpread(150));
+      matrixCharacter.position.set(x, y, z);
 
-    scene.add(matrixCharacter);
-  });
+      scene.add(matrixCharacter);
+
+      setInterval(() => {
+        console.log("Updating character");
+        const newChar = randomMatrixChar();
+        geometry.dispose();
+        geometry = new TextGeometry(newChar, {
+          font: font,
+          size: 1,
+          height: 0.2,
+          curveSegments: 12,
+          bevelEnabled: false,
+        });
+        matrixCharacter.geometry = geometry;
+      }, 250 + Math.random() * 1250); // Random interval between 0.5-1.5 seconds
+    },
+    // Progress callback
+    (xhr) => {
+      console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+    },
+    // Error callback
+    (error) => {
+      console.error("Font loading error:", error);
+    }
+  );
 }
 
-Array(100).fill().forEach(addMatrixCharacter);
+Array(1000).fill().forEach(addMatrixCharacter);
 
 // Avatar;
 
-const blaneTexture = new THREE.TextureLoader().load("src/img/blane.png");
+const blaneTexture = new THREE.TextureLoader().load("/img/blane.png");
 
 const blane = new THREE.Mesh(
   new THREE.BoxGeometry(3, 3, 3),
